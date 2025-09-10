@@ -1,54 +1,55 @@
-// src/routers/mocks.router.js
-import { Router } from 'express';
-import { generateUsers } from '../services/mocking.service.js';
-import UserModel from '../models/user.model.js';
-import PetModel from '../models/pet.model.js';
+import { Router } from "express";
+import { generateUser, generatePet } from "../utils/mocking.js";
+import User from "../models/user.model.js";
+import Pet from "../models/pet.model.js";
 
 const router = Router();
 
-// Endpoint migrado de /mockingpets
-router.get('/mockingpets', async (req, res) => {
-  try {
-    // Ejemplo: devolver pets ficticios
-    const pets = [];
-    for (let i = 1; i <= 20; i++) {
-      pets.push({ name: `Pet${i}`, type: 'Dog', age: i });
-    }
-    res.json(pets);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+// GET /mockingusers → generar 50 usuarios falsos
+router.get("/mockingusers", (req, res) => {
+  const users = [];
+  for (let i = 0; i < 50; i++) {
+    users.push(generateUser());
   }
+  res.json(users);
 });
 
-// Endpoint GET /mockingusers - generar 50 usuarios
-router.get('/mockingusers', async (req, res) => {
-  try {
-    const users = await generateUsers(50);
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+// GET /mockingpets → generar 20 mascotas falsas
+router.get("/mockingpets", (req, res) => {
+  const pets = [];
+  for (let i = 0; i < 20; i++) {
+    pets.push(generatePet());
   }
+  res.json(pets);
 });
 
-// Endpoint POST /generateData - insertar usuarios y pets en DB
-router.post('/generateData', async (req, res) => {
+// POST /generateData → insertar en Mongo Atlas users y pets
+router.post("/generateData", async (req, res) => {
   try {
-    const { users: numUsers = 10, pets: numPets = 10 } = req.body;
+    const { users = 0, pets = 0 } = req.body;
 
-    // Generar e insertar usuarios
-    const users = await generateUsers(numUsers);
-    await UserModel.insertMany(users);
-
-    // Generar e insertar pets
-    const pets = [];
-    for (let i = 1; i <= numPets; i++) {
-      pets.push({ name: `Pet${i}`, type: 'Dog', age: i });
+    const usersArr = [];
+    for (let i = 0; i < users; i++) {
+      usersArr.push(generateUser());
     }
-    await PetModel.insertMany(pets);
 
-    res.json({ message: 'Datos generados e insertados correctamente', usersInserted: numUsers, petsInserted: numPets });
+    const petsArr = [];
+    for (let i = 0; i < pets; i++) {
+      petsArr.push(generatePet());
+    }
+
+    // Insertar en Mongo
+    const insertedUsers = await User.insertMany(usersArr);
+    const insertedPets = await Pet.insertMany(petsArr);
+
+    res.json({
+      message: "✅ Datos generados e insertados correctamente",
+      users: insertedUsers.length,
+      pets: insertedPets.length
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Error al generar datos" });
   }
 });
 

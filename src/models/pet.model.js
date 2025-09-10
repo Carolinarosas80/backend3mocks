@@ -1,10 +1,11 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const petSchema = new mongoose.Schema({
   name: String,
-  type: String,
-  age: Number
+  specie: String,
+  birthDate: Date
 });
 
-const PetModel = mongoose.model('Pet', petSchema);
-export default PetModel;
+const Pet = mongoose.model("Pet", petSchema);
+
+export default Pet;
